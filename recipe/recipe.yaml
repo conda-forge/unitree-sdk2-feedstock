@@ -14,7 +14,7 @@ source:
     - install-third-party-dds.patch
 
 build:
-  number: 0
+  number: 1
   skip: not linux
   script:
     - cmake -S . -B build/
