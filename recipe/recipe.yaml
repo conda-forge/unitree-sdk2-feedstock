@@ -38,6 +38,7 @@ build:
       -DCMAKE_INSTALL_PREFIX=$PREFIX
       -DBUILD_EXAMPLES=OFF
       -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER
+      -DCMAKE_POLICY_DEFAULT_CMP0109=NEW
     - cmake --build build/ --target install
 
 requirements:
