@@ -59,7 +59,6 @@ tests:
       - cmake-package-check unitree_sdk2 --targets unitree_sdk2 ddsc ddscxx
     requirements:
       run:
-        - ${{ stdlib('c') }}
         - ${{ compiler('c') }}
         - ${{ compiler('cxx') }}
         - cmake-package-check
