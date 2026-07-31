@@ -1,0 +1,30 @@
+--- a/cmake/unitree_sdk2Config.cmake.in
++++ b/cmake/unitree_sdk2Config.cmake.in
+@@ -5,3 +5,26 @@
+ 
+ # Add the targets file
+ include("${CMAKE_CURRENT_LIST_DIR}/unitree_sdk2Targets.cmake")
++
++# The SDK ships its own copy of the CycloneDDS C and C++ headers, and both its public headers and
++# the vendored libraries only work with that copy. Those headers live in a dedicated subdirectory,
++# but they include each other as `dds/...`, so any other `dds/` reachable earlier on the include
++# path silently shadows them. This happens as soon as an unrelated dependency exports a prefix that
++# also ships CycloneDDS (e.g. a ROS 2 installation), because usage requirements of imported targets
++# are emitted after the directory-level include directories. Prepending the vendored directories at
++# directory scope restores their priority regardless of the order dependencies are consumed in.
++set(_unitree_sdk2_vendored_include_dirs "")
++foreach(_unitree_sdk2_dds_target ddsc ddscxx)
++  if(TARGET ${_unitree_sdk2_dds_target})
++    get_target_property(_unitree_sdk2_dds_include_dirs
++                        ${_unitree_sdk2_dds_target} INTERFACE_INCLUDE_DIRECTORIES)
++    if(_unitree_sdk2_dds_include_dirs)
++      list(APPEND _unitree_sdk2_vendored_include_dirs ${_unitree_sdk2_dds_include_dirs})
++    endif()
++  endif()
++endforeach()
++if(_unitree_sdk2_vendored_include_dirs)
++  include_directories(BEFORE SYSTEM ${_unitree_sdk2_vendored_include_dirs})
++endif()
++unset(_unitree_sdk2_dds_target)
++unset(_unitree_sdk2_dds_include_dirs)
++unset(_unitree_sdk2_vendored_include_dirs)
