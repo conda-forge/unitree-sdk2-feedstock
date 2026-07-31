@@ -12,9 +12,10 @@ source:
     - add-sched-include.patch
     - fix-destructors-cpp20.patch
     - rename-vendored-dds-shlib.patch
+    - prioritize-vendored-dds-headers.patch
 
 build:
-  number: 2
+  number: 3
   skip: not linux
   script:
     - if: x86_64
@@ -90,6 +91,28 @@ tests:
         - eigen
         - ninja
         - yaml-cpp
+  - script:
+      # The vendored CycloneDDS headers must win over any other CycloneDDS reachable earlier on the
+      # include path, no matter how the conflicting directory enters the consumer's include path.
+      - mkdir -p decoy/dds/ddsi
+      - echo '#error "A foreign CycloneDDS header shadowed the copy vendored by unitree_sdk2"'
+        > decoy/dds/ddsi/ddsi_serdata.h
+      - echo '#include <unitree/robot/channel/channel_publisher.hpp>' > main.cpp
+      - echo 'int main() { return 0; }' >> main.cpp
+      - echo 'cmake_minimum_required(VERSION 3.16)' > CMakeLists.txt
+      - echo 'project(unitree_include_priority CXX)' >> CMakeLists.txt
+      - echo 'include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/decoy)' >> CMakeLists.txt
+      - echo 'find_package(unitree_sdk2 CONFIG REQUIRED)' >> CMakeLists.txt
+      - echo 'add_executable(main main.cpp)' >> CMakeLists.txt
+      - echo 'target_link_libraries(main PRIVATE unitree_sdk2)' >> CMakeLists.txt
+      - cmake -S . -B build/ -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$PREFIX
+      - cmake --build build/
+    requirements:
+      run:
+        - ${{ compiler('c') }}
+        - ${{ compiler('cxx') }}
+        - cmake
+        - ninja
 
 about:
   homepage: https://support.unitree.com/home/zh/developer
